@@ -19,7 +19,7 @@ wmic path Win32_SystemEnclosure get Manufacturer,SerialNumber
 Write-Host " # [31m[SMBIOS DMI] - Processor/CPU[0m"
 wmic path Win32_Processor get Name,SerialNumber
 
-# [SMBIOS DMI] - RAM
+# [SMBIOS DMI] - Memory/RAM
 Write-Host " # [31m[SMBIOS DMI] - RAM[0m"
 wmic path Win32_PhysicalMemory get Manufacturer,SerialNumber
 

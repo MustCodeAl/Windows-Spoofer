@@ -1,4 +1,4 @@
-$RandomString = -join ((48..57) + (65..90) | Get-Random -Count '7' | % {[char]$_})
+$RandomString = -join ([char[]](48..57 + 65..90) | Get-Random -Count 7)
 
 # Local Windows User Account
 # $env:USERNAME

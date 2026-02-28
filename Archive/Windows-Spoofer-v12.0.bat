@@ -452,21 +452,23 @@ if "%~1"=="CheckSerials" (
 
 :: ====================================================================================================
 :: GPU/PCI - Serial Number
+::
+:: PNPDeviceID format: PCI\VEN_XXXX&DEV_XXXX&SUBSYS_XXXXXXXX&REV_XX\4&XXXXXXXX&0&XXXX
+::                                                                        ^^^^^^^^ serial
 :: ====================================================================================================
 
-rem reg query loop through every instance of PNPDeviceID and spoof it
-
-rem Looking at the PNPDeviceID value, break it up by "\".
-rem The first piece it the bus type. For me, it is PCI.
-rem The second section describes the card. There's a vendor code, model number, etc.
-rem The last section contains a number separated by ampersands. The serial number is the second number in that list, formatted in hex.
-rem Translate the hex to decimal
-rem 
-rem Need decimal to hex converter once variable is created to add back into the section below. 
-rem
-rem 	                                         This Section
-rem 	                                           --------
-rem PCI\VEN_10DE&DEV_1F08&SUBSYS_21673842&REV_A1\4&1C3D25BB&0&0019
+>nul 2>&1 (
+	bcdedit /set nointegritychecks on
+	for /f "skip=1 tokens=6 delims=\" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI"') do (
+		for /f "skip=1 tokens=7 delims=\" %%B in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum\PCI\%%A"') do (
+			call :GEN_HEX 8 only_caps
+			for /f "tokens=1,2,3,4 delims=&" %%C in ("%%B") do (
+				PowerShell Rename-Item -Path "'HKLM:\SYSTEM\CurrentControlSet\Enum\PCI\%%A\%%B'" -NewName "'%%C&!GEN_HEX[hex]!&%%E&%%F'" -Force -ErrorAction SilentlyContinue
+			)
+		)
+	)
+	bcdedit /set nointegritychecks off
+)
 
 :: ====================================================================================================
 
@@ -614,6 +616,15 @@ echo( && echo   # [35mSpoofing BIOS[0m
 	)
 
 	rem Memory Device - Serial Number(s)
+	for /f "tokens=2 delims==" %%A in ('wmic memorychip get serialnumber /value ^| find "="') do (
+		for /f "delims=" %%B in ("%%~A") do (
+			if not "To be filled by O.E.M."=="%%B" (
+				if not "Unknown"=="%%B" (
+					AMIDEWINx64.EXE /MSN "!random:~-5!!random:~-5!!random:~-5!!random:~-5!!random:~-5!"
+				)
+			)
+		)
+	)
 
 	del /F /Q "AMIDEWINx64.EXE" "amifldrv64.sys" "amigendrv64.sys" "example.bat" "readme.txt" "dmi-edit-win64-ami.zip"
 )
